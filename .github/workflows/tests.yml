@@ -37,6 +37,5 @@ jobs:
       # 4. Запускаємо тести
       # Оскільки ми використовуємо SQLite в пам'яті для тестів (conftest.py),
       # нам не треба підіймати окремий сервіс Postgres тут. Це спрощує CI.
-      - name: Run Tests with Pytest
-        run: |
-          pytest -v
+      - name: Run Tests with Pytest and timeout
+        run: python -m pytest --timeout=15
