@@ -6,8 +6,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest # Беремо віртуальний Linux
+    strategy:
+      matrix:
+        python-version: [ "3.11" ]
 
     env:
       DB_USER: user
@@ -18,24 +21,23 @@ jobs:
       TESTING: "True"
 
     steps:
-      # 1. Забираємо твій код
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. Встановлюємо Python
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-
-      # 3. Встановлюємо залежності
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # 4. Запускаємо тести
-      # Оскільки ми використовуємо SQLite в пам'яті для тестів (conftest.py),
-      # нам не треба підіймати окремий сервіс Postgres тут. Це спрощує CI.
-      - name: Run Tests with Pytest
-        run: python -m pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with Ruff
+        run: |
+          pip install ruff
+          ruff --format=github --target-version=py310 .
+        continue-on-error: true
+      - name: Test with pytest
+        run: |
+          coverage run -m pytest  -v -s
+      - name: Generate Coverage Report
+        run: |
+          coverage report -m
