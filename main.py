@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from contextlib import asynccontextmanager
 import httpx
-
+import os
 from database import get_db, engine, Base
 from models import CryptoPrice
 import schemas
@@ -13,10 +13,14 @@ import schemas
 # 1. Lifespan (Ініціалізація БД при старті)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Створюємо таблиці, якщо їх немає
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("🚀 База даних готова!")
+    # 2. Додаємо перевірку: якщо це НЕ тестування, то підключаємось
+    if os.getenv("TESTING") != "True":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("🚀 База даних готова!")
+    else:
+        print("🧪 Режим тестування: пропуск підключення до реальної БД")
+
     yield
     print("🛑 Сервер зупинено")
 
